@@ -867,7 +867,7 @@ public class StarboardBridge {
 
   @SuppressWarnings("unused")
   @UsedByNative
-    protected String getVersion() {
+  protected String getVersion() {
     try {
       android.content.pm.PackageInfo packageInfo =
           appContext.getPackageManager().getPackageInfo(appContext.getPackageName(), 0);
@@ -876,5 +876,12 @@ public class StarboardBridge {
       Log.e(TAG, "Failed to get package info", e);
       return "unknown";
     }
+  }
+
+  @SuppressWarnings("unused")
+  @UsedByNative
+  protected String getBrandAndModel() {
+    // ro.product.brand + ro.product.model
+    return Build.BRAND + " " + Build.MODEL;
   }
 }
