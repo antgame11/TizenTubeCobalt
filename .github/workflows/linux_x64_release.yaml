@@ -27,11 +27,9 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt update && sudo apt install -qqy --no-install-recommends \
-            bison clang nasm ninja-build ccache \
-            libasound2-dev libgles2-mesa-dev libglib2.0-dev \
-            libxcomposite-dev libxi-dev libxrender-dev \
-            mesa-common-dev libpulse-dev \
-            libx11-dev libxext-dev python3-venv
+            bison clang nasm ninja-build ccache python3-venv \
+            libgles2-mesa-dev mesa-common-dev libpulse-dev \
+            libasound2-dev libxrender-dev libxcomposite-dev libxi-dev
           ccache --max-size=20G
 
       - name: Download Clang toolchain
@@ -49,7 +47,7 @@ jobs:
 
       - name: Build Cobalt
         run: |
-          NINJA_STATUS="[%e sec | %f/%t %u remaining | %c/sec | j%r] "
+          export NINJA_STATUS="[%e sec | %f/%t %u remaining | %c/sec | j%r] "
           ninja -C out/linux-x64x11_gold cobalt_install
 
       - name: Package Linux x64 binary
