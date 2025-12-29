@@ -27,13 +27,15 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt update && sudo apt install -qqy --no-install-recommends \
-            bison clang libasound2-dev libgles2-mesa-dev libglib2.0-dev \
-            libxcomposite-dev libxi-dev libxrender-dev nasm ninja-build \
-            python3-venv ccache libx11-dev libxext-dev \
-            libgl1-mesa-dev libpulse-dev libavcodec-dev libavformat-dev \
-            libavutil-dev libavresample-dev
+            bison clang nasm ninja-build ccache \
+            libasound2-dev libgles2-mesa-dev libglib2.0-dev \
+            libxcomposite-dev libxi-dev libxrender-dev \
+            mesa-common-dev libpulse-dev \
+            libx11-dev libxext-dev python3-venv
           ccache --max-size=20G
-          bash ./starboard/tools/download_clang.sh
+
+      - name: Download Clang toolchain
+        run: bash ./starboard/tools/download_clang.sh
 
       - name: GN
         run: |
@@ -48,12 +50,14 @@ jobs:
       - name: Build Cobalt
         run: |
           NINJA_STATUS="[%e sec | %f/%t %u remaining | %c/sec | j%r] "
-          ninja -C out/linux-x64x11_gold cobalt
+          ninja -C out/linux-x64x11_gold cobalt_install
 
       - name: Package Linux x64 binary
         run: |
           cd out/linux-x64x11_gold
-          tar -czf cobalt-linux-x64.tar.gz cobalt content/
+          mkdir -p cobalt-linux-x64
+          cp -r cobalt content cobalt-linux-x64/
+          tar -czf cobalt-linux-x64.tar.gz cobalt-linux-x64
           cd ../..
 
       - name: Upload Linux x64 binary to release
