@@ -1,0 +1,68 @@
+---
+name: linux_x64_release
+
+# on:
+#   push:
+#     tags:
+#       - 'v*'
+
+jobs:
+  linux-x64:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install GN
+        run: |
+          wget https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+/latest -O gn.zip
+          unzip gn.zip -d gn_bin
+          sudo mv gn_bin/gn /usr/local/bin/gn
+          sudo chmod +x /usr/local/bin/gn
+
+      - name: Set PYTHONPATH
+        run: |
+          echo "PYTHONPATH=$GITHUB_WORKSPACE:$PYTHONPATH" >> $GITHUB_ENV
+
+      - name: Install build dependencies
+        run: |
+          sudo apt update && sudo apt install -qqy --no-install-recommends \
+            bison clang nasm ninja-build ccache python3-venv \
+            libgles2-mesa-dev mesa-common-dev libpulse-dev \
+            libasound2-dev libxrender-dev libxcomposite-dev libxi-dev
+          ccache --max-size=20G
+
+      - name: Download Clang toolchain
+        run: bash ./starboard/tools/download_clang.sh
+
+      - name: GN
+        run: |
+          gn gen out/linux-x64x11_gold --args='
+            target_platform="linux-x64x11"
+            target_os="linux"
+            target_cpu="x64"
+            build_type="gold"
+            sb_api_version=15'
+          gn check out/linux-x64x11_gold
+
+      - name: Build Cobalt
+        run: |
+          export NINJA_STATUS="[%e sec | %f/%t %u remaining | %c/sec | j%r] "
+          ninja -C out/linux-x64x11_gold cobalt_install
+
+      - name: Package Linux x64 binary
+        run: |
+          cd out/linux-x64x11_gold
+          mkdir -p cobalt-linux-x64
+          cp -r cobalt content cobalt-linux-x64/
+          tar -czf cobalt-linux-x64.tar.gz cobalt-linux-x64
+          cd ../..
+
+      - name: Upload Linux x64 binary to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: out/linux-x64x11_gold/cobalt-linux-x64.tar.gz
+          asset_name: cobalt-linux-x64.tar.gz
+          tag: ${{ github.ref_name }}
+          overwrite: true
