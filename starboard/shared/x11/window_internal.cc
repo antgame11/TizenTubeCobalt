@@ -90,6 +90,17 @@ SbWindowPrivate::SbWindowPrivate(Display* display,
   }
   XStoreName(display, window, name);
 
+  // Set window manager hints to ensure proper focus behavior.
+  // This allows the window manager to properly handle focus transitions
+  // and prevents the window from monopolizing input.
+  XWMHints* wm_hints = XAllocWMHints();
+  if (wm_hints) {
+    wm_hints->flags = InputHint;
+    wm_hints->input = True;
+    XSetWMHints(display, window, wm_hints);
+    XFree(wm_hints);
+  }
+
   Atom wm_delete = XInternAtom(display, "WM_DELETE_WINDOW", True);
   XSetWMProtocols(display, window, &wm_delete, 1);
 
