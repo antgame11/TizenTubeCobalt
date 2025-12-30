@@ -1,8 +1,10 @@
 ---
-name: linux_x64_release
+name: linux_x64_full_build
 
-# This workflow builds Cobalt as a single monolithic executable (not using libcobalt.so).
-# For faster development builds using libcobalt.so, see linux_x64_full_build.yaml
+# This workflow builds Cobalt with libcobalt.so using modular/separate toolchain mode.
+# Use this to create a complete build including libcobalt.so that can be reused for faster
+# development iterations. The libcobalt.so from this build can be manually placed in the 
+# out directory for use with the fast/dev workflow.
 
 on:
   workflow_dispatch:
@@ -11,7 +13,7 @@ on:
 #       - 'v*'
 
 jobs:
-  linux-x64:
+  linux-x64-full:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -39,34 +41,51 @@ jobs:
       - name: Download Clang toolchain
         run: bash ./starboard/tools/download_clang.sh
 
-      - name: GN
+      - name: GN (Modular Build with libcobalt.so)
         run: |
           gn gen out/linux-x64x11_gold --args='
             target_platform="linux-x64x11"
             target_os="linux"
             target_cpu="x64"
             build_type="gold"
-            sb_api_version=15'
+            sb_api_version=15
+            build_with_separate_cobalt_toolchain=true'
           gn check out/linux-x64x11_gold
 
-      - name: Build Cobalt
+      - name: Build libcobalt.so
         run: |
           export NINJA_STATUS="[%e sec | %f/%t %u remaining | %c/sec | j%r] "
           ninja -C out/linux-x64x11_gold cobalt_install
 
-      - name: Package Linux x64 binary
+      - name: Package Linux x64 full build
         run: |
           cd out/linux-x64x11_gold
-          mkdir -p cobalt-linux-x64
-          cp -r cobalt content cobalt-linux-x64/
-          tar -czf cobalt-linux-x64.tar.gz cobalt-linux-x64
+          mkdir -p cobalt-linux-x64-full
+          # Copy the libcobalt.so library
+          if [ -f "install/lib/libcobalt.so" ]; then
+            cp -r install cobalt-linux-x64-full/
+          else
+            # Fallback to direct copy if install structure differs
+            cp -r lib cobalt-linux-x64-full/ || true
+            cp -r bin cobalt-linux-x64-full/ || true
+          fi
+          # Copy content directory
+          cp -r content cobalt-linux-x64-full/ || true
+          tar -czf cobalt-linux-x64-full.tar.gz cobalt-linux-x64-full
           cd ../..
 
-      - name: Upload Linux x64 binary to release
+      - name: Upload Linux x64 full build to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: out/linux-x64x11_gold/cobalt-linux-x64.tar.gz
-          asset_name: cobalt-linux-x64.tar.gz
+          file: out/linux-x64x11_gold/cobalt-linux-x64-full.tar.gz
+          asset_name: cobalt-linux-x64-full.tar.gz
           tag: ${{ github.ref_name }}
           overwrite: true
+
+      - name: Upload libcobalt.so as artifact (for dev use)
+        uses: actions/upload-artifact@v3
+        with:
+          name: libcobalt-so
+          path: out/linux-x64x11_gold/install/lib/libcobalt.so
+          if-no-files-found: warn
