@@ -6,8 +6,8 @@ This document explains the different Linux build workflows available for TizenTu
 
 There are two main build modes for Linux:
 
-1. **Monolithic Build** - Single executable containing all Cobalt code (faster to build small changes)
-2. **Modular Build with libcobalt.so** - Separate shared library for faster development iterations
+1. **Monolithic Build** - Single executable containing all Cobalt code (simpler, suitable for releases)
+2. **Modular Build with libcobalt.so** - Separate shared library for faster development iterations (only rebuilds loader for small changes)
 
 ## Workflows
 

@@ -75,6 +75,8 @@ jobs:
           cd ../..
 
       - name: Upload Linux x64 full build to release
+        # Only upload to release when triggered by a tag push
+        if: startsWith(github.ref, 'refs/tags/')
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -84,7 +86,7 @@ jobs:
           overwrite: true
 
       - name: Upload libcobalt.so as artifact (for dev use)
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: libcobalt-so
           path: out/linux-x64x11_gold/install/lib/libcobalt.so
