@@ -97,8 +97,13 @@ SbWindowPrivate::SbWindowPrivate(Display* display,
   if (wm_hints) {
     wm_hints->flags = InputHint;
     wm_hints->input = True;
-    XSetWMHints(display, window, wm_hints);
+    int result = XSetWMHints(display, window, wm_hints);
+    if (result == 0) {
+      SB_DLOG(WARNING) << "Failed to set WM_HINTS for proper focus management";
+    }
     XFree(wm_hints);
+  } else {
+    SB_DLOG(WARNING) << "Failed to allocate WM_HINTS for focus management";
   }
 
   Atom wm_delete = XInternAtom(display, "WM_DELETE_WINDOW", True);
