@@ -1,6 +1,9 @@
 ---
 name: linux_x64_release
 
+# This workflow builds Cobalt as a single monolithic executable (not using libcobalt.so).
+# For faster development builds using libcobalt.so, see linux_x64_full_build.yaml
+
 on:
   workflow_dispatch:
 #   push:
